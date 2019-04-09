@@ -1,13 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 import axios from 'axios';
 
 const ENDPOINT_TODOS = 'https://react-hooks-start.firebaseio.com/todos.json';
+const actions = { ADD: 'ADD', REMOVE: 'REMOVE', SET: 'SET' };
 
 const todo = props => {
   // !!! ONLY call useState on ROOT level of your function !!!
   const [todo, setTodo] = useState({ id: '', name: '' });
   const [submittedTodo, setSubmittedTodo] = useState(null);
-  const [todoList, setTodoList] = useState([]);
+  // const [todoList, setTodoList] = useState([]);
+
+  const todoListReducer = (state, action) => {
+    switch (action.type) {
+      case actions.SET:
+        return action.payload;
+      case actions.ADD:
+        return state.concat(action.payload);
+      case actions.REMOVE:
+        return state.filter(todo => todo.id !== action.payload);
+      default:
+        return state;
+    }
+  };
+
+  const [todoList, dispatch] = useReducer(todoListReducer, []);
 
   // 2nd argument is CRUCIAL: the 1st argument will execute when the value
   // of the 2nd changes
@@ -27,7 +43,8 @@ const todo = props => {
   // that we always update the current value of todoList
   useEffect(() => {
     if (submittedTodo) {
-      setTodoList(todoList.concat(submittedTodo));
+      // setTodoList(todoList.concat(submittedTodo));
+      dispatch({ type: actions.ADD, payload: submittedTodo });
     }
   }, [submittedTodo]);
 
@@ -40,7 +57,8 @@ const todo = props => {
       for (let id in response.data) {
         updatedList.push(response.data[id]);
       }
-      setTodoList(updatedList);
+      // setTodoList(updatedList);
+      dispatch({ type: actions.SET, payload: updatedList });
     } catch (ex) {
       console.error('[GET todos] ', ex.message);
     }
