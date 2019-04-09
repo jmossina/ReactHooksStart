@@ -6,6 +6,7 @@ const ENDPOINT_TODOS = 'https://react-hooks-start.firebaseio.com/todos.json';
 const todo = props => {
   // !!! ONLY call useState on ROOT level of your function !!!
   const [todo, setTodo] = useState({ id: '', name: '' });
+  const [submittedTodo, setSubmittedTodo] = useState(null);
   const [todoList, setTodoList] = useState([]);
 
   // 2nd argument is CRUCIAL: the 1st argument will execute when the value
@@ -20,6 +21,15 @@ const todo = props => {
       console.log('[cleanup] fetchRemoteTodos');
     };
   }, []);
+
+  // Nice way to handle async operation holding the value of the state for
+  // some time: we change submittedToDo when the promise is resolved, so
+  // that we always update the current value of todoList
+  useEffect(() => {
+    if (submittedTodo) {
+      setTodoList(todoList.concat(submittedTodo));
+    }
+  }, [submittedTodo]);
 
   const fetchRemoteTodos = async () => {
     let response = undefined;
@@ -46,14 +56,14 @@ const todo = props => {
   };
 
   const todoAddHandler = async () => {
-    const updatedList = todoList.concat(todo);
-    setTodoList(updatedList);
     let response = undefined;
     try {
-      response = await axios.post(ENDPOINT_TODOS, {
+      const todoItem = {
         id: todo.id,
         name: todo.name
-      });
+      };
+      response = await axios.post(ENDPOINT_TODOS, todoItem);
+      setSubmittedTodo(todoItem);
       console.log('[POST todos] ', response);
     } catch (ex) {
       console.error('[POST todos] ', ex.error);
